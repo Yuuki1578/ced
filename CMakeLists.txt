@@ -17,4 +17,5 @@ ADD_EXECUTABLE(
   ced
 
   src/main.c
+  src/memory.c
 )
