@@ -1,27 +1,22 @@
-#include <ced/memory.h>
+#include <ced/string.h>
 #include <stdio.h>
 
-int main(int argc, char **argv) {
-  Layout layout;
-  long *array;
+int main(void) {
+  String str = string_new();
 
-  layout = layout_new(sizeof(long));
-  layout_add(&layout, 10);
+  string_pushstr(&str, "H");
+  string_pushstr(&str, "e");
+  string_pushstr(&str, "l");
+  string_pushstr(&str, "l");
+  string_pushstr(&str, "o");
+  string_pushstr(&str, "!");
+  string_push(&str, '!', END_CH);
 
-  array = layout_alloc(&layout, CED_ZEROING);
+  printf("Str: %s\n", string(&str));
+  printf("Len: %li\n", str.len);
+  printf("Cap: %li\n", str.layout.cap);
 
-  if (layout.status == NULLPTR) {
-    return 1;
-  }
-
-  layout_add(&layout, 20);
-  array = layout_realloc(&layout, array);
-
-  for (int i = 0; i < layout.len; i++, array[i] = i % 2 == 0 ? i : i + 1) {
-    printf("%li\n", array[i]);
-  }
-
-  layout_free(&layout, array);
+  string_dealloc(&str);
 
   return 0;
 }

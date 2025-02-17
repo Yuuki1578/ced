@@ -3,10 +3,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#if __STDC_VERSION__ != 202311L
-#error Expected C23 version
-#endif
-
 #ifndef CED_MEMORY
 #define CED_MEMORY
 
@@ -24,10 +20,8 @@
 #define CED_DEFAULT (0)
 #define CED_ZEROING (1)
 
-#define MaybeNull _Nullable
-
 typedef struct Layout Layout;
-typedef void *_Nonnull UniquePtr;
+typedef void *UniquePtr;
 
 struct Layout {
   uint16_t t_size;
@@ -36,11 +30,11 @@ struct Layout {
   int status;
 };
 
-Layout layout_new(uint16_t t_size);
-void layout_add(Layout *MaybeNull layout, size_t count);
-void layout_min(Layout *MaybeNull layout, size_t count);
-UniquePtr layout_alloc(Layout *MaybeNull layout, int flag);
-UniquePtr layout_realloc(Layout *MaybeNull layout, UniquePtr dst);
-void layout_free(Layout *MaybeNull layout, UniquePtr dst);
+Layout layout_new(uint16_t t_size, size_t default_len);
+void layout_add(Layout *layout, size_t count);
+void layout_min(Layout *layout, size_t count);
+UniquePtr layout_alloc(Layout *layout, int flag);
+UniquePtr layout_realloc(Layout *layout, UniquePtr dst);
+void layout_dealloc(Layout *layout, UniquePtr dst);
 
 #endif

@@ -1,30 +1,39 @@
 #include <ced/memory.h>
 #include <stdlib.h>
 
-Layout layout_new(uint16_t t_size) {
+Layout layout_new(uint16_t t_size, size_t default_len) {
+  if (default_len == 0) {
+    return (Layout){
+        .t_size = t_size != 0 ? t_size : sizeof(char),
+        .cap = 0,
+        .len = 0,
+        .status = NULLPTR,
+    };
+  }
+
   return (Layout){
-      .t_size = t_size != 0 ? t_size : sizeof(void),
-      .cap = 0,
-      .len = 0,
+      .t_size = t_size,
+      .cap = t_size * default_len,
+      .len = default_len,
       .status = NULLPTR,
   };
 }
 
-void layout_add(Layout *MaybeNull layout, size_t count) {
-  if (layout == nullptr || count == 0) {
+void layout_add(Layout *layout, size_t count) {
+  if (layout == NULL || count == 0) {
     return;
   }
 
   if (layout->t_size == 0) {
-    layout->t_size = sizeof(void);
+    layout->t_size = sizeof(char);
   }
 
   layout->cap += (layout->t_size * count);
   layout->len += count;
 }
 
-void layout_min(Layout *MaybeNull layout, size_t count) {
-  if (layout == nullptr || count == 0) {
+void layout_min(Layout *layout, size_t count) {
+  if (layout == NULL || count == 0) {
     return;
   }
 
@@ -36,10 +45,10 @@ void layout_min(Layout *MaybeNull layout, size_t count) {
   layout->len -= count;
 }
 
-UniquePtr layout_alloc(Layout *MaybeNull layout, int flag) {
+UniquePtr layout_alloc(Layout *layout, int flag) {
   UniquePtr dump;
 
-  if (layout == nullptr) {
+  if (layout == NULL) {
 
     // return unique pointer that can be fed to free() later
     return malloc(CED_ALLOC_UNSPEC);
@@ -49,7 +58,7 @@ UniquePtr layout_alloc(Layout *MaybeNull layout, int flag) {
   if (layout->cap == 0 || layout->cap > CED_ALLOC_LIMIT) {
     dump = malloc(CED_ALLOC_UNSPEC);
 
-    if (dump == nullptr) {
+    if (dump == NULL) {
       layout->status = NULLPTR;
     }
 
@@ -65,7 +74,7 @@ UniquePtr layout_alloc(Layout *MaybeNull layout, int flag) {
 
   dump = malloc(layout->cap);
 
-  if (dump == nullptr) {
+  if (dump == NULL) {
     layout->status = NULLPTR;
   }
 
@@ -74,9 +83,9 @@ UniquePtr layout_alloc(Layout *MaybeNull layout, int flag) {
     size_t type_size = layout->t_size;
 
     if (layout->t_size == 0) {
-      type_size = sizeof(void);
+      type_size = sizeof(char);
     }
-    
+
     memset(dump, 0, type_size);
   }
 
@@ -84,12 +93,12 @@ UniquePtr layout_alloc(Layout *MaybeNull layout, int flag) {
   return dump;
 }
 
-UniquePtr layout_realloc(Layout *MaybeNull layout, UniquePtr dst) {
+UniquePtr layout_realloc(Layout *layout, UniquePtr dst) {
 
   // Uninitialize
   UniquePtr dump;
 
-  if (layout == nullptr || dst == nullptr) {
+  if (layout == NULL || dst == NULL) {
 
     // malloc to zero, return a unique pointer that can be fed to free()
     // or let it be null pointer and set errno on error
@@ -99,35 +108,35 @@ UniquePtr layout_realloc(Layout *MaybeNull layout, UniquePtr dst) {
 
   dump = realloc(dst, layout->cap);
 
-  if (dump == nullptr) {
+  if (dump == NULL) {
     layout->status = NULLPTR;
   }
 
   return dump;
 }
 
-void layout_free(Layout *MaybeNull layout, UniquePtr dst) {
+void layout_dealloc(Layout *layout, UniquePtr dst) {
 
   // @WARNING never EVER use NULL or nullptr in dst if layout->status is NONNULL
-  if (layout == nullptr || layout->status == NONNULL) {
+  if (layout == NULL || layout->status == NONNULL) {
 
     if (layout->status != UNIQUE) {
       return;
     }
-    
+
     // free the unique pointer
     free(dst);
     return;
   }
 
-  if (layout == nullptr || dst == nullptr) {
+  if (layout == NULL || dst == NULL) {
     return;
   }
 
   free(dst);
 
   // invalidate the pointer
-  dst = nullptr;
+  dst = NULL;
   layout->cap = 0;
   layout->len = 0;
   layout->status = NULLPTR;

@@ -1,21 +1,16 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 3.21)
+cmake_minimum_required(VERSION 3.20...3.31)
+project("ced" VERSION "0.0.1" LANGUAGES "C")
 
-PROJECT(
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED TRUE)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+include_directories(include)
+
+file(GLOB SRC_FILES "src/*.c")
+
+add_executable(
   ced
 
-  VERSION 0.0.1
-  LANGUAGES C
-)
-
-SET(CMAKE_C_STANDARD 23)
-SET(CMAKE_C_STANDARD_REQUIRED TRUE)
-SET(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-INCLUDE_DIRECTORIES(include)
-
-ADD_EXECUTABLE(
-  ced
-
-  src/main.c
-  src/memory.c
+  ${SRC_FILES}
 )
