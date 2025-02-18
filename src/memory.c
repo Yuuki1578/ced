@@ -45,8 +45,8 @@ void layout_min(Layout *layout, size_t count) {
   layout->len -= count;
 }
 
-UniquePtr layout_alloc(Layout *layout, int flag) {
-  UniquePtr dump;
+void *layout_alloc(Layout *layout, int flag) {
+  void *dump;
 
   if (layout == NULL) {
 
@@ -93,10 +93,10 @@ UniquePtr layout_alloc(Layout *layout, int flag) {
   return dump;
 }
 
-UniquePtr layout_realloc(Layout *layout, UniquePtr dst) {
+void *layout_realloc(Layout *layout, void *dst) {
 
   // Uninitialize
-  UniquePtr dump;
+  void *dump;
 
   if (layout == NULL || dst == NULL) {
 
@@ -115,10 +115,10 @@ UniquePtr layout_realloc(Layout *layout, UniquePtr dst) {
   return dump;
 }
 
-void layout_dealloc(Layout *layout, UniquePtr dst) {
+void layout_dealloc(Layout *layout, void *dst) {
 
   // @WARNING never EVER use NULL or nullptr in dst if layout->status is NONNULL
-  if (layout == NULL || layout->status == NONNULL) {
+  if (layout == NULL || layout->status != NONNULL) {
 
     if (layout->status != UNIQUE) {
       return;

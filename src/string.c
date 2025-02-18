@@ -1,5 +1,3 @@
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
 #include <ced/memory.h>
 #include <ced/string.h>
 #include <limits.h>
@@ -34,6 +32,8 @@ void string_push(String *string, ...) {
 
   va_start(variadic);
 
+  // @WARNING last argument must be 0 or END_CH or CHAR_MIN
+  // as a breakpoint
   while ((args_recv = va_arg(variadic, unsigned int)) != END_CH) {
     if (args_recv > CHAR_MAX || args_recv == 0) {
       break;
@@ -44,7 +44,7 @@ void string_push(String *string, ...) {
       string->raw_str = layout_alloc(&string->layout, CED_ZEROING);
     }
 
-    if (string->len == string->layout.cap) {
+    else if (string->len == string->layout.cap) {
       layout_add(&string->layout, CED_STRING_STEP);
       string->raw_str = layout_realloc(&string->layout, string->raw_str);
     }
@@ -59,6 +59,29 @@ void string_push(String *string, ...) {
   va_end(variadic);
 }
 
+void string_pushch(String *string, char ch) {
+  if (string == nullptr) {
+    return;
+  }
+
+  if (string->layout.cap == 0) {
+    layout_add(&string->layout, CED_STRING_STEP);
+    string->raw_str = layout_alloc(&string->layout, CED_ZEROING);
+  }
+
+  else if (string->layout.cap == string->layout.t_size * string->len) {
+    layout_add(&string->layout, CED_STRING_STEP);
+    string->raw_str = layout_realloc(&string->layout, string->raw_str);
+  }
+
+  switch (string->layout.status) {
+  case NULLPTR:
+    return;
+  default:
+    string->raw_str[string->len++] = ch;
+  }
+}
+
 void string_pushstr(String *string, char *cstr) {
   size_t len;
 
@@ -69,8 +92,20 @@ void string_pushstr(String *string, char *cstr) {
   len = strlen(cstr);
 
   for (size_t count = 0; count < len; count++) {
-    string_push(string, cstr[count], END_CH);
+    string_pushch(string, cstr[count]);
   }
+}
+
+char *string_at(String *string, size_t index) {
+  if (string == nullptr || string->layout.status == NULLPTR) {
+    return nullptr;
+  }
+
+  if (string->len <= index) {
+    return nullptr;
+  }
+
+  return &string->raw_str[index];
 }
 
 void string_dealloc(String *string) {

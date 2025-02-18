@@ -17,6 +17,11 @@
 #define CED_STRING_STEP (8L)
 #endif
 
+#ifdef END_CH
+#define string_pushvar(string_ptr, ...)                                          \
+  string_push(string_ptr, __VA_ARGS__, END_CH)
+#endif
+
 typedef struct String String;
 
 struct String {
@@ -27,12 +32,10 @@ struct String {
 
 char *string(String *string);
 String string_new(void);
-
-void string_push(String *string, ...)
-    __attribute__((deprecated("Warning, zero-termnated function, use with a "
-                              "last sentinel END_CH value")));
-
+void string_push(String *string, ...);
+void string_pushch(String *string, char ch);
 void string_pushstr(String *string, char *cstr);
+char *string_at(String *string, size_t index);
 void string_dealloc(String *string);
 
 #endif
