@@ -19,5 +19,6 @@ add_executable(
 add_executable(
   ced_test
 
+  ${SRC_FILES}
   ${TEST_DIR}/ced_test.c
 )

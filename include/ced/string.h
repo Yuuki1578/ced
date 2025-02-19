@@ -22,6 +22,7 @@
   string_push(string_ptr, __VA_ARGS__, END_CH)
 #endif
 
+// non-terminated, ASCII-based, and heap-allocated string type: String
 typedef struct String String;
 
 struct String {

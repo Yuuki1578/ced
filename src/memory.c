@@ -20,7 +20,7 @@ Layout layout_new(uint16_t t_size, size_t default_len) {
 }
 
 void layout_add(Layout *layout, size_t count) {
-  if (layout == NULL || count == 0) {
+  if (layout == nullptr || count == 0) {
     return;
   }
 
@@ -33,7 +33,7 @@ void layout_add(Layout *layout, size_t count) {
 }
 
 void layout_min(Layout *layout, size_t count) {
-  if (layout == NULL || count == 0) {
+  if (layout == nullptr || count == 0) {
     return;
   }
 
@@ -48,7 +48,7 @@ void layout_min(Layout *layout, size_t count) {
 void *layout_alloc(Layout *layout, int flag) {
   void *dump;
 
-  if (layout == NULL) {
+  if (layout == nullptr) {
 
     // return unique pointer that can be fed to free() later
     return malloc(CED_ALLOC_UNSPEC);
@@ -74,7 +74,7 @@ void *layout_alloc(Layout *layout, int flag) {
 
   dump = malloc(layout->cap);
 
-  if (dump == NULL) {
+  if (dump == nullptr) {
     layout->status = NULLPTR;
   }
 
@@ -98,7 +98,7 @@ void *layout_realloc(Layout *layout, void *dst) {
   // Uninitialize
   void *dump;
 
-  if (layout == NULL || dst == NULL) {
+  if (layout == nullptr || dst == nullptr) {
 
     // malloc to zero, return a unique pointer that can be fed to free()
     // or let it be null pointer and set errno on error
@@ -108,7 +108,7 @@ void *layout_realloc(Layout *layout, void *dst) {
 
   dump = realloc(dst, layout->cap);
 
-  if (dump == NULL) {
+  if (dump == nullptr) {
     layout->status = NULLPTR;
   }
 
@@ -118,7 +118,7 @@ void *layout_realloc(Layout *layout, void *dst) {
 void layout_dealloc(Layout *layout, void *dst) {
 
   // @WARNING never EVER use NULL or nullptr in dst if layout->status is NONNULL
-  if (layout == NULL || layout->status != NONNULL) {
+  if (layout == nullptr || layout->status != NONNULL) {
 
     if (layout->status != UNIQUE) {
       return;
@@ -129,7 +129,7 @@ void layout_dealloc(Layout *layout, void *dst) {
     return;
   }
 
-  if (layout == NULL || dst == NULL) {
+  if (layout == nullptr || dst == nullptr) {
     return;
   }
 
