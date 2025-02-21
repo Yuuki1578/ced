@@ -1,13 +1,14 @@
 Project ced;
 
+ced.standard = "c23";
+ced.smolize = true;
+ced.threading = true;
+ced.build_dir = "build/obj"
 ced.files = recursive("src/*.c");
-
 ced.includes = {
 	"include"
 };
-
-ced.flags = "-Wall -Werror -g -std=c23";
-
+ced.flags = "-Wall -Werror -g";
 ced.out = "build/ced";
 
 ced.build();
