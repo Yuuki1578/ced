@@ -30,14 +30,6 @@ Reader reader_new(FILE *istream) {
   return reader;
 }
 
-size_t reader_read(Reader *reader) {
-  auto buffer = string_new();
-  
-  if (reader == nullptr || reader->istream == nullptr) {
-    return 0;
-  }
-}
-
 void reader_close(Reader *reader) {
   if (reader == nullptr) {
     return;

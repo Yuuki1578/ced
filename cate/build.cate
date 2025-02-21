@@ -1,0 +1,13 @@
+Project ced;
+
+ced.files = recursive("src/*.c");
+
+ced.includes = {
+	"include"
+};
+
+ced.flags = "-Wall -Werror -g -std=c23";
+
+ced.out = "build/ced";
+
+ced.build();
