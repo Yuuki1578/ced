@@ -120,7 +120,7 @@ void layout_dealloc(Layout *layout, void *dst) {
     free(dst);
 
     // invalidate the pointer
-    dst = NULL;
+    dst = nullptr;
     layout->cap = 0;
     layout->len = 0;
     layout->status = NULLPTR;

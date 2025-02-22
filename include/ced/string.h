@@ -14,7 +14,7 @@
 #endif
 
 #ifndef CED_STRING_STEP
-#define CED_STRING_STEP (32L)
+#define CED_STRING_STEP (64L)
 #endif
 
 #ifdef END_CH
@@ -56,6 +56,10 @@ void string_pushstr(String *string, char *cstr);
 // return the address of String at index <index>
 // return null if index >= String->len
 char *string_at(String *string, size_t index);
+
+// truncate remaining unused bytes in the buffer
+// the capacity is now Layout->len * Layout->t_size
+void string_clip(String *string);
 
 // deallocate the inner buffer, freeing it's memory
 void string_dealloc(String *string);
