@@ -26,9 +26,9 @@
 typedef struct String String;
 
 struct String {
-  char *raw_str;
-  size_t len;
-  Layout layout;
+    char *raw_str;
+    size_t len;
+    Layout layout;
 };
 
 char *string(String *string);

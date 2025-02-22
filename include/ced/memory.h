@@ -32,10 +32,10 @@
 typedef struct Layout Layout;
 
 struct Layout {
-  uint16_t t_size;
-  size_t cap;
-  size_t len;
-  int status;
+    uint16_t t_size;
+    size_t cap;
+    size_t len;
+    int status;
 };
 
 // create a new layout, if the t_size == 0, it's set to sizeof(char) by default

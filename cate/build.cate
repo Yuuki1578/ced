@@ -8,7 +8,7 @@ ced.files = recursive("src/*.c");
 ced.includes = {
 	"include"
 };
-ced.flags = "-Wall -Werror -g";
+ced.flags = "-O3 -Wall -Werror -Wpedantic";
 ced.out = "build/ced";
 
 ced.build();

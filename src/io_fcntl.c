@@ -1,76 +1,84 @@
-// dev only
-#define CED_PRIVATE_IMPL
-
 #include <ced/io_fcntl.h>
-#include <ced/string.h>
-#include <stdio.h>
+#include <string.h>
 
-Reader Stdin;
-Writer Stdout;
-Writer Stderr;
+IoStream io_new(FILE *stream, enum StreamKind kind) {
+    IoStream init;
 
-void global_stream_initialize(void) {
-  Stdin = reader_new(stdin);
-  Stdout = writer_new(stdout);
-  Stderr = writer_new(stderr);
+    // default state
+    init.stream = stderr;
+    init.kind = KIND_STDERR;
+    init.buffer = string_new();
+
+    switch (kind) {
+    case KIND_STDIN:
+        init.stream = stdin;
+        init.kind = kind;
+        break;
+
+    case KIND_STDOUT:
+        init.stream = stdout;
+        init.kind = kind;
+        break;
+
+    case KIND_STDERR:
+        init.stream = stderr;
+        init.kind = kind;
+        break;
+
+    case KIND_FILESYS:
+        if (stream == nullptr)
+            return init;
+
+        init.stream = stream;
+        init.kind = kind;
+        break;
+    }
+
+    return init;
 }
 
-Reader reader_new(FILE *istream) {
-  Reader reader;
+int8_t io_write(IoStream *stream, char *buffer) {
+    if (stream == nullptr || buffer == nullptr)
+        return CED_IO_ERROR;
 
-  if (istream == nullptr) {
-    reader.istream = stdin;
-  }
+    if (stream->stream == nullptr)
+        return CED_IO_ERROR;
 
-  else {
-    reader.istream = istream;
-  }
+    switch (stream->kind) {
+    case KIND_STDOUT:
+    case KIND_STDERR:
+    case KIND_FILESYS:
+        string_pushstr(&stream->buffer, buffer);
+        break;
+    
+    // do not write to a buffer if stream->kind == KIND_STDIN or above 3
+    default:
+        return CED_IO_ERROR;
+    }
 
-  reader.buffer = string_new();
-  return reader;
+    // success
+    return 0;
 }
 
-void reader_close(Reader *reader) {
-  if (reader == nullptr) {
-    return;
-  }
+uint64_t io_flush(IoStream *stream) {
+    uint64_t retval = 0;
 
-  if (reader->istream == nullptr) {
-    goto end_label;
-  }
+    if (stream == nullptr || stream->stream == nullptr)
+        return retval;
 
-  fclose(reader->istream);
+    switch (stream->kind) {
+    case KIND_STDOUT:
+    case KIND_STDERR:
+    case KIND_FILESYS:
+        if (stream->buffer.raw_str == nullptr)
+            return retval;
 
-end_label:
-  string_dealloc(&reader->buffer);
-}
+        retval = fwrite(string(&stream->buffer), stream->buffer.layout.t_size, stream->buffer.len, stream->stream);
+        fflush(stream->stream);
 
-Writer writer_new(FILE *ostream) {
-  Writer writer;
+    default:
+        break;
+    }
 
-  if (ostream == nullptr) {
-    writer.ostream = stdout;
-  }
-
-  else {
-    writer.ostream = ostream;
-  }
-
-  writer.buffer = string_new();
-  return writer;
-}
-
-void writer_close(Writer *writer) {
-  if (writer == nullptr) {
-    return;
-  }
-
-  if (writer->ostream == nullptr) {
-    goto end_label;
-  }
-
-  fclose(writer->ostream);
-
-end_label:
-  string_dealloc(&writer->buffer);
+    return retval;
 }
