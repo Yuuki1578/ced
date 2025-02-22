@@ -11,6 +11,7 @@
 
 typedef struct IoStream IoStream;
 
+// buffered I/O handler
 struct IoStream {
     FILE *stream;
 
@@ -24,10 +25,33 @@ struct IoStream {
     String buffer;
 };
 
+// bound a FILE*
 IoStream io_new(FILE *stream, enum StreamKind kind);
+
+// write a bytes to a buffer, return -1 on error
 int8_t io_write(IoStream *stream, char *buffer);
+
+// flush an opened stream, ensuring all bytes reached it's destination
 uint64_t io_flush(IoStream *stream);
-int64_t io_read(IoStream *stream, uint64_t nth);
+
+// truncating it's buffer to zero or nullptr
+void io_clear(IoStream *stream);
+
+// read <nth> bytes from opened stream, store it in the buffer
+uint64_t io_read(IoStream *stream, uint64_t nth);
+
+// read all bytes, contained in opened stream, and store it in the buffer
 int64_t io_read_all(IoStream *stream);
+
+// move a buffer, note that the buffer from IoStream *stream is moved as a return value
+String io_bufftake(IoStream *stream);
+
+// copying a buffer from IoStream *stream, return it's copy
+String io_buffcopy(IoStream *stream);
+
+// close a bound to FILE*, releasing it's buffer
+// note that if the StreamKind is KIND_FILESYS
+// you still need to close the FILE* using fclose()
+void io_close(IoStream *stream);
 
 #endif

@@ -21,6 +21,29 @@ String string_new(void) {
   };
 }
 
+void string_reserve(String *string, size_t count) {
+    Layout *layout;
+
+    if (string == nullptr || !count)
+        return;
+
+    if (!string->layout.t_size)
+        string->layout.t_size = sizeof(char);
+
+    layout = &string->layout;
+    layout_add(layout, count);
+
+    switch (string->layout.status) {
+    case NONNULL:
+        string->raw_str = layout_realloc(layout, string->raw_str);
+        break;
+
+    default:
+        string->raw_str = layout_alloc(layout, CED_DEFAULT);
+        break;
+    }
+}
+
 void string_push(String *string, ...) {
   va_list variadic;
   unsigned int args_recv;

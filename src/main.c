@@ -1,11 +1,17 @@
 #include <ced/io_fcntl.h>
+#include <stdio.h>
 
 int main(int argc, char **argv, char **env) {
-    IoStream out = io_new(nullptr, KIND_STDOUT);
+    FILE *file = fopen(__FILE__, "r");
+    IoStream input = io_new(file, KIND_FILESYS);
 
-    io_write(&out, "Hello, ");
-    io_write(&out, "world!\n");
-    io_flush(&out);
+    io_read(&input, 64);
+    io_read(&input, 64);
+
+    printf("%s\n", string(&input.buffer));
+    printf("%li\n", input.buffer.layout.cap);
+
+    io_close(&input);
 
     return 0;
 }
