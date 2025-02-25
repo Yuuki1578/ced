@@ -23,27 +23,25 @@
 #endif
 
 // non-terminated, ASCII-based, and heap-allocated string type: String
-typedef struct String String;
-
-struct String {
+typedef struct String {
     char *raw_str;
     size_t len;
     Layout layout;
-};
+} String;
 
 // initialize null string
 String string_new(void);
 
-// safe string getter from a String instance
+// return the first pointer of the char* from String
 char *string(String *string);
 
 // allocate additional <count> bytes memory space to raw buffer
-// can be use to minimalize native system call
+// can be use to minimalize the malloc() or realloc() call
 void string_reserve(String *string, size_t count);
 
 // pushing a char variable or expression at the end of the raw buffer
 // argument may be more than 2, but cannot less than 1
-// always end the variadic params with END_CH macros
+// always end the variadic arguments with END_CH macro
 // or use the alternative string_pushvar() macro
 void string_push(String *string, ...);
 
@@ -58,7 +56,7 @@ void string_pushstr(String *string, char *cstr);
 char *string_at(String *string, size_t index);
 
 // truncate remaining unused bytes in the buffer
-// the capacity is now Layout->len * Layout->t_size
+// the capacity is now String->len * Layout->t_size
 void string_clip(String *string);
 
 // deallocate the inner buffer, freeing it's memory

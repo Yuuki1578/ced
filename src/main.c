@@ -1,20 +1,18 @@
+#include <ced/io.h>
 #include <ced/string.h>
 #include <stdio.h>
 
-int main(int argc, char **argv, char **env) {
-    String str = string_new();
+int main(void) {
+    FILE *file = fopen(__FILE__, "r");
+    IoStream io = io_new(file, KIND_FILESYS);
 
-    string_pushstr(&str, "Hello!");
+    io_read_all(&io);
 
-    printf("%s\n", string(&str));
-    printf("%lu\n", str.layout.cap);
-
-    string_clip(&str);
-
-    printf("%s\n", string(&str));
-    printf("%lu\n", str.layout.cap);
+    String str = io_bufftake(&io);
+    printf("%s", string(&str));
 
     string_dealloc(&str);
+    io_close(&io);
 
     return 0;
 }

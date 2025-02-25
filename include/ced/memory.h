@@ -29,14 +29,12 @@
 //   1. UNIQUE == -1
 //   2. NULLPTR == 0
 //   3. NONNULL == 1
-typedef struct Layout Layout;
-
-struct Layout {
+typedef struct Layout {
     uint16_t t_size;
     size_t cap;
     size_t len;
     int status;
-};
+} Layout;
 
 // create a new layout, if the t_size == 0, it's set to sizeof(char) by default
 Layout layout_new(uint16_t t_size, size_t default_len);
@@ -47,9 +45,9 @@ void layout_add(Layout *layout, size_t count);
 // removing <count> element from Layout and the capacity
 void layout_min(Layout *layout, size_t count);
 
-// allocate memory from the heap based on Layout->capacity using C malloc
-// flag is used to tell the allocator, if the successful memory should
-// be set to zero or not
+// allocate memory from the heap, based on Layout->cap using malloc()
+// flag is used to tell the function that, if the successful memory
+// recieved from the allocator, should be set to zero or not
 void *layout_alloc(Layout *layout, int flag);
 
 // reallocating the memory based on Layout->capacity

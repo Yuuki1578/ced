@@ -4,9 +4,7 @@ ced.standard = "c23";
 ced.smolize = true;
 ced.threading = true;
 ced.files = recursive("src/*.c");
-ced.includes = {
-	"include"
-};
+ced.includes = {"include"};
 ced.flags = "-O3 -Wall -Werror -Wpedantic";
 ced.out = "out/ced";
 

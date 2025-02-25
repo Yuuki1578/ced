@@ -7,13 +7,11 @@
 #ifndef CED_IO_FCNTL
 #define CED_IO_FCNTL
 
-#define CED_IO_ERROR (-1);
+#define CED_IO_ERROR (-1)
 #define CED_FILE_BYTES_OFFSET CHAR_MAX
 
-typedef struct IoStream IoStream;
-
 // buffered I/O handler
-struct IoStream {
+typedef struct IoStream {
     FILE *stream;
 
     enum StreamKind : uint8_t {
@@ -24,7 +22,7 @@ struct IoStream {
     } kind;
 
     String buffer;
-};
+} IoStream;
 
 // bound a FILE*
 IoStream io_new(FILE *stream, enum StreamKind kind);

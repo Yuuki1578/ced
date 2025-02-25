@@ -1,6 +1,6 @@
 #include <ced/memory.h>
 #include <ced/string.h>
-#include <ced/io_fcntl.h>
+#include <ced/io.h>
 #include <memory.h>
 #include <string.h>
 
@@ -149,6 +149,26 @@ int8_t io_flush(IoStream *stream) {
 
     // success
     return 0;
+}
+
+String *io_buffer(IoStream *stream) {
+    if (stream == nullptr)
+        return nullptr;
+
+    return &stream->buffer;
+}
+
+String io_bufftake(IoStream *stream) {
+    String string = string_new();
+
+    if (stream == nullptr)
+        return string;
+    
+    string = stream->buffer;
+    stream->buffer.raw_str = nullptr;
+
+    io_clear(stream);
+    return string;
 }
 
 void io_clear(IoStream *stream) {
