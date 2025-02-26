@@ -56,8 +56,10 @@ void *layout_alloc(Layout *layout, int flag) {
         if (dump == nullptr)
             layout->status = NULLPTR;
 
-        // flag to unique pointer, do NOT use the unique pointer
-        // instead, free it using free()
+        /*
+         * flag to unique pointer, do NOT use the unique pointer
+         * instead, free it using free()
+         * */
         layout->status = UNIQUE;
         return dump;
     }
@@ -88,9 +90,11 @@ void *layout_realloc(Layout *layout, void *dst) {
 
     if (layout == nullptr || dst == nullptr)
 
-        // malloc to zero, return a unique pointer that can be fed to free()
-        // or let it be null pointer and set errno on error
-        // see the malloc(3)
+        /*
+         * malloc to zero, return a unique pointer that can be fed to free()
+         * or let it be null pointer and set errno on error
+         * see the malloc(3)
+         * */
         return malloc(CED_ALLOC_UNSPEC);
 
     dump = realloc(dst, layout->cap);

@@ -4,31 +4,31 @@
 #include <memory.h>
 #include <string.h>
 
-IoStream io_new(FILE *stream, enum StreamKind kind) {
+IoStream io_new(FILE *stream, int kind) {
     IoStream init;
 
     // default state
     init.stream = stderr;
-    init.kind = KIND_STDERR;
+    init.kind = STREAM_STDERR;
     init.buffer = string_new();
 
     switch (kind) {
-    case KIND_STDIN:
+    case STREAM_STDIN:
         init.stream = stdin;
         init.kind = kind;
         break;
 
-    case KIND_STDOUT:
+    case STREAM_STDOUT:
         init.stream = stdout;
         init.kind = kind;
         break;
 
-    case KIND_STDERR:
+    case STREAM_STDERR:
         init.stream = stderr;
         init.kind = kind;
         break;
 
-    case KIND_FILESYS:
+    case STREAM_FILE:
         if (stream == nullptr)
             return init;
 
@@ -40,17 +40,14 @@ IoStream io_new(FILE *stream, enum StreamKind kind) {
     return init;
 }
 
-int8_t io_write(IoStream *stream, char *buffer) {
+int io_write(IoStream *stream, char *buffer) {
     if (stream == nullptr || buffer == nullptr)
-        return CED_IO_ERROR;
-
-    if (stream->stream == nullptr)
-        return CED_IO_ERROR;
+        return WRITE_FAILURE;
 
     switch (stream->kind) {
-    case KIND_STDOUT:
-    case KIND_STDERR:
-    case KIND_FILESYS:
+    case STREAM_STDOUT:
+    case STREAM_STDERR:
+    case STREAM_FILE:
         
         // save the buffer to the internal buffer (dynamically)
         string_pushstr(&stream->buffer, buffer);
@@ -58,60 +55,60 @@ int8_t io_write(IoStream *stream, char *buffer) {
     
     // do not write to a buffer if stream->kind == KIND_STDIN or above 3
     default:
-        return CED_IO_ERROR;
+        return WRITE_FAILURE;
     }
 
     // success
-    return 0;
+    return WRITE_SUCCESS;
 }
 
-int8_t io_read(IoStream *stream, size_t count) {
+int io_read(IoStream *stream, size_t count) {
     String *buffer;
 
     if (stream == nullptr || !count)
-        return CED_IO_ERROR;
+        return READ_FAILURE;
 
     buffer = &stream->buffer;
 
     switch (stream->kind) {
-    case KIND_STDIN:
-    case KIND_FILESYS:
+    case STREAM_STDIN:
+    case STREAM_FILE:
         if (stream->stream == nullptr)
-            return CED_IO_ERROR;
+            return READ_FAILURE;
 
         string_reserve(buffer, count);
 
         if (buffer->layout.status == NULLPTR)
-            return CED_IO_ERROR;
+            return ALLOC_FAILURE;
 
         if (fread(buffer->raw_str, sizeof(char), count, stream->stream) == 0)
-            return CED_IO_ERROR;
+            return READ_FAILURE;
 
         rewind(stream->stream);
-
         break;
 
     default:
+        return READ_FAILURE;
     }
 
     // success
-    return 0;
+    return READ_SUCCESS;
 }
 
-int8_t io_read_all(IoStream *stream) {
+int io_read_all(IoStream *stream) {
     if (stream == nullptr || stream->stream == nullptr)
-        return CED_IO_ERROR;
+        return READ_FAILURE;
 
     switch (stream->kind) {
-    case KIND_STDIN:
-    case KIND_FILESYS:
+    case STREAM_STDIN:
+    case STREAM_FILE:
 
         // cheap 128 byte temporary buffer
         Layout layout = layout_new(sizeof(char), CED_FILE_BYTES_OFFSET);
         char *heapbuf = layout_alloc(&layout, CED_DEFAULT);
 
         if (layout.status == NULLPTR)
-            return CED_IO_ERROR;
+            return ALLOC_FAILURE;
 
         while ((heapbuf = fgets(heapbuf, CED_FILE_BYTES_OFFSET, stream->stream)) != nullptr) {
             string_pushstr(&stream->buffer, heapbuf);
@@ -119,43 +116,65 @@ int8_t io_read_all(IoStream *stream) {
         }
 
         layout_dealloc(&layout, heapbuf);
-
         break;
 
     default:
+        return READ_FAILURE;
     }
 
     // success
-    return 0;
+    return READ_SUCCESS;
 }
 
-int8_t io_flush(IoStream *stream) {
+int io_read_until(IoStream *stream, int delim) {
     if (stream == nullptr || stream->stream == nullptr)
-        return CED_IO_ERROR;
+        return READ_FAILURE;
 
     switch (stream->kind) {
-    case KIND_STDOUT:
-    case KIND_STDERR:
-    case KIND_FILESYS:
-        if (stream->buffer.raw_str == nullptr)
-            return CED_IO_ERROR;
+    case STREAM_STDIN:
+    case STREAM_FILE:
+        String *buf = io_buffer(stream);
+        int ch;
 
-        if (fwrite(string(&stream->buffer), stream->buffer.layout.t_size, stream->buffer.len, stream->stream) == 0 && fflush(stream->stream) != 0)
-            return CED_IO_ERROR;
+        while ((ch = fgetc(stream->stream)) != delim && ch != EOF)
+            string_push(buf, ch);
+
+        if (stream->kind == STREAM_FILE)
+            rewind(stream->stream);
+
+        break;
 
     default:
-        break;
+        return READ_FAILURE;
+    }
+
+    return READ_SUCCESS;
+}
+
+int io_flush(IoStream *stream) {
+    if (stream == nullptr || stream->stream == nullptr)
+        return WRITE_FAILURE;
+
+    switch (stream->kind) {
+    case STREAM_STDOUT:
+    case STREAM_STDERR:
+    case STREAM_FILE:
+        if (stream->buffer.raw_str == nullptr)
+            return WRITE_FAILURE;
+
+        if (fwrite(string(&stream->buffer), stream->buffer.layout.t_size, stream->buffer.len, stream->stream) == 0 && fflush(stream->stream) != 0)
+            return WRITE_FAILURE;
+
+    default:
+        return WRITE_FAILURE;
     }
 
     // success
-    return 0;
+    return WRITE_SUCCESS;
 }
 
 String *io_buffer(IoStream *stream) {
-    if (stream == nullptr)
-        return nullptr;
-
-    return &stream->buffer;
+    return stream == nullptr ? nullptr : &stream->buffer;
 }
 
 String io_bufftake(IoStream *stream) {

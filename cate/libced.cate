@@ -1,0 +1,3 @@
+Library catelib;
+
+catelib.type = "static";
