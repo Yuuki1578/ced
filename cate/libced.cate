@@ -5,7 +5,11 @@ Library catelib(static);
 catelib.standard = "c23";
 catelib.smolize = true;
 catelib.threading = true;
-catelib.files = {"src/*.c"};
+catelib.files = {
+    "src/io.c",
+    "src/memory.c",
+    "src/string.c"
+};
 catelib.includes = {"include"};
 catelib.flags = "-Wall -Werror -Wpedantic";
 catelib.out = "out/libced.a";

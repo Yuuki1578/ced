@@ -36,10 +36,10 @@
  *   3. NONNULL == 1
  * */
 typedef struct Layout {
-    uint16_t t_size;
-    size_t cap;
-    size_t len;
-    int status;
+    uint16_t    t_size;
+    size_t      cap;
+    size_t      len;
+    int         status;
 } Layout;
 
 /*

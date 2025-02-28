@@ -23,9 +23,9 @@
  * buffered I/O handler
  * */
 typedef struct IoStream {
-    FILE *stream;
-    int kind;
-    String buffer;
+    FILE    *stream;
+    int     kind;
+    String  buffer;
 } IoStream;
 
 /*

@@ -10,11 +10,11 @@
 #ifdef CHAR_MIN
 #define END_CH CHAR_MIN
 #else
-#define END_CH (0)
+#define END_CH 0
 #endif
 
 #ifndef CED_STRING_STEP
-#define CED_STRING_STEP (64L)
+#define CED_STRING_STEP 64L
 #endif
 
 #ifdef END_CH
@@ -30,9 +30,9 @@
  * non-terminated, ASCII-based, and heap-allocated string type: String
  * */
 typedef struct String {
-    char *raw_str;
-    size_t len;
-    Layout layout;
+    char    *raw_str;
+    size_t  len;
+    Layout  layout;
 } String;
 
 /*
