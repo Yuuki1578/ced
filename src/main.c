@@ -57,7 +57,8 @@
 
 //   return 0;
 // }
-#include <ced/io.h>
+
+#include <ced/bufio.h>
 #include <ced/string.h>
 
 int main(void) {

@@ -1,90 +1,65 @@
-#pragma once
+#ifndef CED_STRING_H
+#define CED_STRING_H
 
 #include <ced/memory.h>
 #include <limits.h>
 #include <stddef.h>
 
-#ifndef CED_STRING
-#define CED_STRING
+#define CED_STRING_STEP 128ULL
 
-#ifdef CHAR_MIN
-#define END_CH CHAR_MIN
-#else
-#define END_CH 0
-#endif
-
-#ifndef CED_STRING_STEP
-#define CED_STRING_STEP 64L
-#endif
-
-#ifdef END_CH
-
-/*
- * same as string_push(), except it doesn't need to insert the END_CH value
- * */
-#define string_pushvar(string_ptr, ...)                                        \
-  string_push(string_ptr, __VA_ARGS__, END_CH)
-
-#endif
+#define CED_STRING_OK   0
+#define CED_STRING_ERR  -1
 
 /*
  * non-terminated, ASCII-based, and heap-allocated string type: String
  * */
-typedef struct String {
-  char *raw_str;
-  size_t len;
-  layout_t layout;
-} str_t;
+typedef struct {
+    char      *raw_str;
+    size_t    len;
+    layout_t  layout;
+} string_t;
 
 /*
  * initialize null string
  * */
-str_t str_new(void);
+string_t string_new(void);
 
 /*
  * return the first pointer of the char* from String
  * */
-char *str(str_t *string);
+char *string_into(string_t *string);
 
 /*
  * allocate additional <count> bytes memory space to raw buffer
  * can be use to minimalize the malloc() or realloc() call
  * */
-void str_reserve(str_t *string, size_t count);
-
-/*
- * pushing a char variable or expression at the end of the raw buffer
- * argument may be more than 2, but cannot less than 1
- * always end the variadic arguments with END_CH macro
- * or use the alternative string_pushvar() macro
- * */
-void str_push(str_t *string, ...);
+ssize_t string_reserve(string_t *string, size_t count);
 
 /*
  * pushing a single character at the end of the raw buffer
  * */
-void str_pushch(str_t *string, char ch);
+int string_push(string_t *string, char ch);
 
 /*
  * pushing a C-string at the end of the raw buffer
  * */
-void str_pushstr(str_t *string, char *cstr);
+ssize_t string_pushstr(string_t *string, char *cstr);
 
 /*
- * return the address of String at index <index>
- * return null if index >= String->len
+ * return the address of a single character at index <index>
+ * return null if index >= string_t->len
  * */
-char *str_at(str_t *string, size_t index);
+char *string_at(string_t *string, size_t index);
 
 /*
  * truncate remaining unused bytes in the buffer
- * the capacity is now String->len * Layout->t_size
+ * the capacity is now string_t->len * layout_t->t_size
  * */
-void str_trim(str_t *string);
+void string_crop(string_t *string);
 
 /*
  * deallocate the inner buffer, freeing it's memory
  * */
-void str_free(str_t *string);
+void string_free(string_t *string);
 
 #endif

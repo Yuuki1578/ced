@@ -1,145 +1,153 @@
 #include <ced/memory.h>
 #include <ced/string.h>
 #include <limits.h>
-#include <stdarg.h>
 #include <string.h>
 
-char *str(str_t *string) {
-  char *wildcard = "";
+char *string_into(string_t *string)
+{
+    char *wildcard = "";
 
-  if (string == nullptr || string->raw_str == nullptr)
-    return wildcard;
+    if (string == nullptr || string->raw_str == nullptr)
+        return wildcard;
 
-  return string->raw_str;
+    return string->raw_str;
 }
 
-str_t str_new(void) {
-  return (str_t){
-      .raw_str = nullptr,
-      .len = 0,
-      .layout = layout_new(sizeof(char), 0),
-  };
+string_t string_new(void)
+{
+    return (string_t) {
+        .raw_str = nullptr,
+        .len = 0,
+        .layout = layout_new(sizeof(char), 0),
+    };
 }
 
-void str_reserve(str_t *string, size_t count) {
-  layout_t *layout;
+ssize_t string_reserve(string_t *string, size_t count)
+{
+    layout_t    *layout;
+    void        *tmp;
 
-  if (string == nullptr || !count)
-    return;
+    if (string == nullptr || count == 0)
+        return CED_STRING_ERR;
 
-  if (!string->layout.t_size)
-    string->layout.t_size = sizeof(char);
+    if (string->layout.t_size == 0)
+        string->layout.t_size = sizeof(char);
 
-  layout = &string->layout;
-  layout_add(layout, count);
+    layout = &string->layout;
+    layout_add(layout, count);
 
-  switch (string->layout.status) {
-  case non_null:
-    string->raw_str = layout_realloc(layout, string->raw_str);
-    break;
+    switch (string->layout.status) {
+    case NON_NULL:
+        tmp = layout_realloc(layout, string->raw_str);
+        break;
 
-  default:
-    string->raw_str = layout_alloc(layout, CED_DEFAULT);
-    break;
-  }
-}
-
-void str_push(str_t *string, ...) {
-  va_list variadic;
-  unsigned int args_recv;
-
-  if (string == nullptr)
-    return;
-
-  va_start(variadic);
-
-  // @WARNING last argument must be 0 or END_CH or CHAR_MIN
-  // as a breakpoint
-  while ((args_recv = va_arg(variadic, unsigned int)) != END_CH) {
-    if (args_recv > CHAR_MAX || args_recv == 0)
-      break;
-
-    if (string->layout.status == null_ptr) {
-      layout_add(&string->layout, CED_STRING_STEP);
-      string->raw_str = layout_alloc(&string->layout, CED_ZEROING);
+    default:
+        tmp = layout_alloc(layout);
+        break;
     }
 
-    else if (string->len == string->layout.cap) {
-      layout_add(&string->layout, CED_STRING_STEP);
-      string->raw_str = layout_realloc(&string->layout, string->raw_str);
+    if (string->layout.status == NULL_PTR)
+        return CED_STRING_ERR;
+
+    string->raw_str = tmp;
+    return (ssize_t) count;
+}
+
+int string_push(str_t *string, char ch)
+{
+    char *tmp;
+
+    if (string == nullptr)
+        return CED_STRING_ERR;
+
+    if (string->layout.cap == 0) {
+        layout_add(&string->layout, CED_STRING_STEP);
+        tmp = layout_alloc(&string->layout);
     }
 
-    if (string->layout.status == null_ptr)
-      break;
+    else if (string->layout.cap == string->layout.t_size * string->len) {
+        layout_add(&string->layout, CED_STRING_STEP);
+        tmp = layout_realloc(&string->layout, string->raw_str);
+    }
 
-    string->raw_str[string->len++] = args_recv;
-  }
+    switch (string->layout.status) {
+    case NULL_PTR:
+    case UNIQUE_PTR:
+        return CED_STRING_ERR;
 
-  va_end(variadic);
+    default:
+        tmp[string->len++] = ch;
+        string->raw_str = tmp;
+    }
+
+    return CED_STRING_OK;
 }
 
-void str_pushch(str_t *string, char ch) {
-  if (string == nullptr)
-    return;
+ssize_t string_pushstr(string_t *string, char *cstr)
+{
+    size_t    len;
+    char      *tmp;
 
-  if (string->layout.cap == 0) {
-    layout_add(&string->layout, CED_STRING_STEP);
-    string->raw_str = layout_alloc(&string->layout, CED_ZEROING);
-  }
+    if (string == nullptr || cstr == nullptr)
+        return CED_STRING_ERR;
 
-  else if (string->layout.cap == string->layout.t_size * string->len) {
-    layout_add(&string->layout, CED_STRING_STEP);
-    string->raw_str = layout_realloc(&string->layout, string->raw_str);
-  }
+    len = strlen(cstr);
+    layout_add(&string->layout, len);
 
-  switch (string->layout.status) {
-  case null_ptr:
-    return;
-  default:
-    string->raw_str[string->len++] = ch;
-  }
+    if (string->layout.status == NULL_PTR)
+        tmp = layout_alloc(&string->layout);
+    else
+        tmp = layout_realloc(&string->layout, string->raw_ptr);
+
+    if (string->layout.status != NON_NULL)
+        return CED_STRING_ERR;
+
+    if (strlen(tmp) == 0)
+        strncpy(tmp, cstr, len);
+    else
+        strncat(tmp, cstr, len);
+
+    string->raw_str = tmp;
+    return len;
 }
 
-void str_pushstr(str_t *string, char *cstr) {
-  size_t len;
+char *string_at(string_t *string, size_t index)
+{
+    if (string == nullptr || string->layout.status == NULL_PTR)
+        return nullptr;
 
-  if (string == nullptr || cstr == nullptr)
-    return;
+    if (string->len <= index)
+        return nullptr;
 
-  len = strlen(cstr);
-
-  for (size_t count = 0; count < len; count++)
-    str_pushch(string, cstr[count]);
+    return &string->raw_str[index];
 }
 
-char *str_at(str_t *string, size_t index) {
-  if (string == nullptr || string->layout.status == null_ptr)
-    return nullptr;
+void string_crop(string_t *string)
+{
+    layout_t    *current;
+    char        *tmp
 
-  if (string->len <= index)
-    return nullptr;
+    if (string == nullptr || string->layout.status == NULL_PTR)
+        return;
 
-  return &string->raw_str[index];
+    current = &string->layout;
+
+    if (string->len == current->cap)
+        return;
+
+    layout_min(current, current->cap - string->len);
+    tmp = layout_realloc(current, string->raw_str);
+
+    if (current->status != NON_NULL)
+        return;
+
+    string->raw_str = tmp;
 }
 
-void str_trim(str_t *string) {
-  layout_t *current;
+void string_free(string_t *string)
+{
+    if (string == nullptr)
+        return;
 
-  if (string == nullptr || string->layout.status == null_ptr)
-    return;
-
-  current = &string->layout;
-
-  if (string->len == current->cap)
-    return;
-
-  layout_min(current, current->cap - string->len);
-  string->raw_str = layout_realloc(current, string->raw_str);
-}
-
-void str_free(str_t *string) {
-  if (string == nullptr)
-    return;
-
-  layout_dealloc(&string->layout, string->raw_str);
+    layout_dealloc(&string->layout, string->raw_str);
 }

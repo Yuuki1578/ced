@@ -1,31 +1,24 @@
-#pragma once
+#ifndef CED_MEMORY_H
+#define CED_MEMORY_H
 
 #include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
 
-#ifndef CED_MEMORY
-#define CED_MEMORY
-
 // default limit is set to 3GiB (reasonable)
-#ifndef CED_ALLOC_LIMIT
-#define CED_ALLOC_LIMIT ((((3L * 1024L) * 1024L) * 1024L))
-#endif
+#define CED_ALLOC_LIMIT     ((((3ULL * 1024ULL) * 1024ULL) * 1024ULL))
 
-#define CED_ALLOC_UNSPEC 0L
+// unspecified allocation
+#define CED_ALLOC_UNSPEC    0ULL
 
-typedef enum {
-  unique_ptr = -1,
-  null_ptr = 0,
-  non_null = 1,
+typedef enum : int8_t {
+    UNIQUE_PTR  = -1,
+    NULL_PTR    = 0,
+    NON_NULL    = 1,
 } status_t;
 
-// allocation flag
-#define CED_DEFAULT 0
-#define CED_ZEROING 1
-
-#define ALLOC_SUCCESS 0
-#define ALLOC_FAILURE errno
+#define ALLOC_SUCCESS       0
+#define ALLOC_FAILURE       -1
 
 /*
  * simple memory layout, providing basic features such as:
@@ -33,15 +26,15 @@ typedef enum {
  * 2. the memory capacity
  * 3. the pointer length
  * 4. status of the current block of memory, which can be:
- *   1. UNIQUE == -1
- *   2. NULLPTR == 0
- *   3. NONNULL == 1
+ *   1. UNIQUE_PTR == -1
+ *   2. NULL_PTR == 0
+ *   3. NON_NULL == 1
  * */
 typedef struct {
-  uint16_t t_size;
-  size_t cap;
-  size_t len;
-  status_t status;
+    uint16_t    t_size;
+    size_t      cap;
+    size_t      len;
+    status_t    status;
 } layout_t;
 
 /*
@@ -65,7 +58,7 @@ void layout_min(layout_t *layout, size_t count);
  * flag is used to tell the function that, if the successful memory
  * recieved from the allocator, should be set to zero or not
  * */
-void *layout_alloc(layout_t *layout, int flag);
+void *layout_alloc(layout_t *layout);
 
 /*
  * reallocating the memory, based on Layout->capacity
