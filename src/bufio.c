@@ -43,6 +43,15 @@ bufio_t bufio_new(FILE *stream, int kind)
     return init;
 }
 
+bufio_t bufio_open(const char *path, const char *mode)
+{
+    return (bufio_t) {
+        .stream = fopen(path, mode),
+        .kind = STREAM_FILE,
+        .buffer = string_new(),
+    };
+}
+
 ssize_t bufio_write(bufio_t *stream, char *buffer)
 {
     ssize_t len;
@@ -85,7 +94,8 @@ ssize_t bufio_read(bufio_t *stream, size_t count)
         if (stream->stream == nullptr)
             return BUFIO_UNSPEC_FAILURE;
 
-        string_reserve(&stream->buffer, stream->buffer.layout.cap + count);
+        if (buffer->layout.cap <= count)
+            string_reserve(buffer, buffer->layout.cap + count);
 
         if (buffer->layout.status == NULL_PTR)
             return BUFIO_UNSPEC_FAILURE;
@@ -106,28 +116,27 @@ ssize_t bufio_read(bufio_t *stream, size_t count)
 ssize_t bufio_read_all(bufio_t *stream)
 {
     ssize_t nbytes = 0;
+    ssize_t offset;
+    ssize_t current;
 
     if (stream == nullptr || stream->stream == nullptr)
         return BUFIO_UNSPEC_FAILURE;
 
     switch (stream->kind) {
-    case STREAM_STDIN:
     case STREAM_FILE:
-
-        // cheap 128 byte temporary buffer
-        layout_t layout = layout_new(sizeof(char), CED_STRING_STEP);
-        char *heapbuf = layout_alloc(&layout);
-
-        if (layout.status == NULL_PTR)
+        if (stream->stream == nullptr)
             return BUFIO_UNSPEC_FAILURE;
 
-        while (fread(heapbuf, sizeof(char), CED_STRING_STEP, stream->stream) != 0) {
-            string_pushstr(&stream->buffer, heapbuf);
-            nbytes += strlen(heapbuf);
-            memset(heapbuf, 0, CED_STRING_STEP);
-        }
+        current = ftell(stream->stream);
+        fseek(stream->stream, 0, SEEK_END);
+        offset = ftell(stream->stream) + 1;
 
-        layout_dealloc(&layout, heapbuf);
+        if (stream->buffer.layout.cap <= offset)
+            string_reserve(&stream->buffer, stream->buffer.layout.cap + offset);
+
+        fseek(stream->stream, current, SEEK_SET);
+        fread(stream->buffer.raw_str + stream->buffer.len, sizeof(char), offset, stream->stream);
+
         break;
 
     default:
@@ -183,7 +192,7 @@ ssize_t bufio_flush(bufio_t *stream)
         if (stream->buffer.raw_str == nullptr)
             return BUFIO_UNSPEC_FAILURE;
 
-        if ((written = fwrite(string_into(&stream->buffer), stream->buffer.layout.t_size, stream->buffer.len, stream->stream)) == 0 && fflush(stream->stream) != 0)
+        if ((written = fwrite(STR(stream->buffer), stream->buffer.layout.t_size, stream->buffer.len, stream->stream)) == 0 && fflush(stream->stream) != 0)
             return BUFIO_WRITE_FAILURE;
 
     default:

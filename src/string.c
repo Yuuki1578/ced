@@ -5,15 +5,7 @@
 #include <string.h>
 #include <limits.h>
 
-char *string_into(string_t *string)
-{
-    char *wildcard = "";
-
-    if (string == nullptr || string->raw_str == nullptr)
-        return wildcard;
-
-    return string->raw_str;
-}
+size_t string_step_hook = CED_STRING_STEP;
 
 string_t string_new(void)
 {
@@ -32,13 +24,14 @@ ssize_t string_reserve(string_t *string, size_t count)
     if (string == nullptr || count == 0)
         return CED_STRING_ERR;
 
-    if (string->layout.t_size == 0)
-        string->layout.t_size = sizeof(char);
-
     layout = &string->layout;
+
+    if (layout->t_size == 0)
+        layout->t_size = sizeof(char);
+
     layout_add(layout, count);
 
-    switch (string->layout.status) {
+    switch (layout->status) {
     case NON_NULL:
         tmp = layout_realloc(layout, string->raw_str);
         break;
@@ -48,7 +41,7 @@ ssize_t string_reserve(string_t *string, size_t count)
         break;
     }
 
-    if (string->layout.status == NULL_PTR)
+    if (layout->status == NULL_PTR)
         return CED_STRING_ERR;
 
     string->raw_str = tmp;
@@ -63,12 +56,12 @@ int string_push(string_t *string, char ch)
         return CED_STRING_ERR;
 
     if (string->layout.cap == 0) {
-        layout_add(&string->layout, CED_STRING_STEP);
+        layout_add(&string->layout, string_step_hook);
         tmp = layout_alloc(&string->layout);
     }
 
     else if (string->layout.cap == string->layout.t_size * string->len) {
-        layout_add(&string->layout, CED_STRING_STEP);
+        layout_add(&string->layout, string_step_hook);
         tmp = layout_realloc(&string->layout, string->raw_str);
     }
 
@@ -94,6 +87,14 @@ ssize_t string_pushstr(string_t *string, char *cstr)
         return CED_STRING_ERR;
 
     len = strlen(cstr);
+
+    if (string->layout.cap > len) {
+        memcpy(string->raw_str + string->len, cstr, len);
+        string->len += len;
+
+        return len;
+    }
+
     layout_add(&string->layout, len);
 
     if (string->layout.status == NULL_PTR)
@@ -106,6 +107,8 @@ ssize_t string_pushstr(string_t *string, char *cstr)
 
     strncat(tmp, cstr, len);
     string->raw_str = tmp;
+    string->len += len;
+
     return len;
 }
 

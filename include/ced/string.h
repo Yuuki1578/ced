@@ -20,15 +20,17 @@ typedef struct {
     layout_t  layout;
 } string_t;
 
+extern size_t string_step_hook;
+
+/* METADATA */
+#define STR(string)      ((string).raw_str == nullptr ? "" : (string).raw_str)
+#define CAP(string)      ((string).layout.cap)
+#define LEN(string)      ((string).len)
+
 /*
  * initialize null string
  * */
 string_t string_new(void);
-
-/*
- * return the first pointer of the char* from String
- * */
-char *string_into(string_t *string);
 
 /*
  * allocate additional <count> bytes memory space to raw buffer

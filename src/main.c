@@ -1,17 +1,17 @@
 #include <ced/string.h>
+#include <ced/bufio.h>
 #include <stdio.h>
 
 int main(int argc, char **argv)
 {
-    string_t str = string_new();
+    auto buf = bufio_open("src/bufio.c", "r");
 
-    string_pushstr(&str, "Hello, ");
-    string_pushstr(&str, "world!: ");
-    string_pushstr(&str, __FILE__);
+    bufio_read_all(&buf);
 
-    printf("%s\n", string_into(&str));
+    printf("%s", buf.buffer.raw_str);
 
-    string_free(&str);
+    bufio_clear(&buf);
+    bufio_close(&buf);
 
     return 0;
 }

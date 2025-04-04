@@ -32,6 +32,11 @@ typedef struct {
 bufio_t bufio_new(FILE *stream, int kind);
 
 /*
+ * open and bound to a FILE*
+ * */
+bufio_t bufio_open(const char *path, const char *mode);
+
+/*
  * write a bytes to a buffer, return -1 on error
  * */
 ssize_t bufio_write(bufio_t *stream, char *buffer);
