@@ -18,8 +18,6 @@ CFLAGS = -O3 \
 		 -Wpedantic \
 		 -std=c23 \
 
-.PHONY: clean
-
 $(BUILD)/$(PROGRAM): $(C_OBJECTS)
 	@echo [INFO] Linking $^ into $@
 	@$(CC) $(CFLAGS) $^ -o $@
@@ -29,6 +27,4 @@ $(BUILD)/%.o: $(SOURCE)/%.c
 	@if [ ! -d $(BUILD) ]; then mkdir $(BUILD); fi
 	@$(CC) $(CFLAGS) -I$(INCLUDES) -c $< -o $@
 
-clean: $(BUILD)
-	@echo [INFO] Removing $< directory
-	@rm -rf $<
+include Dependencies.mk

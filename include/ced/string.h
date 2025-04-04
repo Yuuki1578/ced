@@ -12,7 +12,9 @@
 #define CED_STRING_ERR  -1
 
 /*
- * non-terminated, ASCII-based, and heap-allocated string type: String
+ * non-terminated + heap-allocated string type: string_t
+ * use standard formatter if you want to print it to standard output
+ * the functionality of this type is same as vector of uint8_t
  * */
 typedef struct {
     char      *raw_str;

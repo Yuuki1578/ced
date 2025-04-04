@@ -21,8 +21,6 @@ CFLAGS = -O3 \
 
 AR_FLAGS = rcs
 
-.PHONY: clean
-
 $(BUILD)/$(LIBRARY): $(C_OBJECTS)
 	@echo [INFO] Creating static library from $^
 	@$(AR) $(AR_FLAGS) $(BUILD)/$(LIBRARY) $^
@@ -32,6 +30,4 @@ $(BUILD)/%.o: $(SOURCE)/%.c
 	@if [ ! -d $(BUILD) ]; then mkdir $(BUILD); fi
 	@$(CC) $(CFLAGS) -I$(INCLUDES) -c $< -o $@
 
-clean: $(BUILD)
-	@echo [INFO] Removing $< directory
-	@rm -rf $<
+include Dependencies.mk
