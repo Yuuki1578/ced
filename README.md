@@ -1,9 +1,8 @@
 # Ced, simple text editor for UNIX-like machine
 
 ## 1. Building
-This project using [Cate](https://github.com/TheMilkies/Cate) as a build system,
-so you better get the cate binary first.
+Make sure you had `gcc`,`binutils` and `make`
 
 1. `git clone https://github.com/Yuuki1578/ced.git`
-2. `cate`
-3. `out/ced`
+2. `make`, if you want the static library `make -f StaticLib`
+3. `./build/ced` or `gcc <file> -L./build -lced`
