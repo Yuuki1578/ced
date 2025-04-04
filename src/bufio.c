@@ -1,8 +1,10 @@
 #include <ced/bufio.h>
 #include <ced/memory.h>
 #include <ced/string.h>
-#include <memory.h>
+#include <sys/types.h>
+#include <stddef.h>
 #include <string.h>
+#include <memory.h>
 
 bufio_t bufio_new(FILE *stream, int kind)
 {
@@ -43,10 +45,10 @@ bufio_t bufio_new(FILE *stream, int kind)
 
 ssize_t bufio_write(bufio_t *stream, char *buffer)
 {
-    size_t len;
+    ssize_t len;
 
     if (stream == nullptr || buffer == nullptr)
-        return BUFIO_FAILURE;
+        return BUFIO_UNSPEC_FAILURE;
 
     len = strlen(buffer);
 
@@ -65,7 +67,7 @@ ssize_t bufio_write(bufio_t *stream, char *buffer)
     }
 
     // success
-    return (ssize_t) len;
+    return len;
 }
 
 ssize_t bufio_read(bufio_t *stream, size_t count)
@@ -101,7 +103,10 @@ ssize_t bufio_read(bufio_t *stream, size_t count)
     return (ssize_t) count;
 }
 
-ssize_t bufio_read_all(bufio_t *stream) {
+ssize_t bufio_read_all(bufio_t *stream)
+{
+    ssize_t nbytes = 0;
+
     if (stream == nullptr || stream->stream == nullptr)
         return BUFIO_UNSPEC_FAILURE;
 
@@ -116,8 +121,9 @@ ssize_t bufio_read_all(bufio_t *stream) {
         if (layout.status == NULL_PTR)
             return BUFIO_UNSPEC_FAILURE;
 
-        while (fgets(heapbuf, CED_STRING_STEP, stream->stream) != nullptr) {
+        while (fread(heapbuf, sizeof(char), CED_STRING_STEP, stream->stream) != 0) {
             string_pushstr(&stream->buffer, heapbuf);
+            nbytes += strlen(heapbuf);
             memset(heapbuf, 0, CED_STRING_STEP);
         }
 
@@ -125,107 +131,121 @@ ssize_t bufio_read_all(bufio_t *stream) {
         break;
 
     default:
-        return READ_FAILURE;
+        return BUFIO_UNSPEC_FAILURE;
     }
 
     // success
-    return READ_SUCCESS;
+    return nbytes;
 }
 
-int io_read_until(io_t *stream, int delim) {
-  if (stream == nullptr || stream->stream == nullptr)
-    return READ_FAILURE;
+ssize_t bufio_read_until(bufio_t *stream, int delim)
+{
+    string_t    *buffer;
+    int         ch;
+    ssize_t     count;
 
-  switch (stream->kind) {
-  case STREAM_STDIN:
-  case STREAM_FILE:
-    str_t *buf = io_buffer(stream);
-    int ch;
+    if (stream == nullptr || stream->stream == nullptr)
+        return BUFIO_UNSPEC_FAILURE;
 
-    while ((ch = fgetc(stream->stream)) != delim && ch != EOF)
-      str_push(buf, ch);
+    switch (stream->kind) {
+    case STREAM_STDIN:
+    case STREAM_FILE:
+        buffer = bufio_buffer(stream);
 
-    if (stream->kind == STREAM_FILE)
-      rewind(stream->stream);
+        if (buffer == nullptr)
+            return BUFIO_UNSPEC_FAILURE;
 
-    break;
+        while ((ch = fgetc(stream->stream)) != delim && ch != EOF) {
+            string_push(buffer, ch);
+            count++;
+        }
 
-  default:
-    return READ_FAILURE;
-  }
+        break;
 
-  return READ_SUCCESS;
+    default:
+        return BUFIO_UNSPEC_FAILURE;
+    }
+
+    return count;
 }
 
-int io_flush(io_t *stream) {
-  if (stream == nullptr || stream->stream == nullptr)
-    return WRITE_FAILURE;
+ssize_t bufio_flush(bufio_t *stream)
+{
+    ssize_t written;
 
-  switch (stream->kind) {
-  case STREAM_STDOUT:
-  case STREAM_STDERR:
-  case STREAM_FILE:
-    if (stream->buffer.raw_str == nullptr)
-      return WRITE_FAILURE;
+    if (stream == nullptr || stream->stream == nullptr)
+        return BUFIO_UNSPEC_FAILURE;
 
-    if (fwrite(str(&stream->buffer), stream->buffer.layout.t_size,
-               stream->buffer.len, stream->stream) == 0 &&
-        fflush(stream->stream) != 0)
-      return WRITE_FAILURE;
+    switch (stream->kind) {
+    case STREAM_STDOUT:
+    case STREAM_STDERR:
+    case STREAM_FILE:
+        if (stream->buffer.raw_str == nullptr)
+            return BUFIO_UNSPEC_FAILURE;
 
-  default:
-    return WRITE_FAILURE;
-  }
+        if ((written = fwrite(string_into(&stream->buffer), stream->buffer.layout.t_size, stream->buffer.len, stream->stream)) == 0 && fflush(stream->stream) != 0)
+            return BUFIO_WRITE_FAILURE;
 
-  // success
-  return WRITE_SUCCESS;
+    default:
+        return BUFIO_UNSPEC_FAILURE;
+    }
+
+    // success
+    return written;
 }
 
-str_t *io_buffer(io_t *stream) {
-  return stream == nullptr ? nullptr : &stream->buffer;
+string_t *bufio_buffer(bufio_t *stream)
+{
+    return stream == nullptr ? nullptr : &stream->buffer;
 }
 
-str_t io_bufftake(io_t *stream) {
-  str_t string = str_new();
+string_t bufio_buffer_move(bufio_t *stream)
+{
+    string_t string = string_new();
 
-  if (stream == nullptr)
+    if (stream == nullptr)
+        return string;
+
+    string = stream->buffer;
+    stream->buffer.raw_str = nullptr;
+    bufio_clear(stream);
+
     return string;
-
-  string = stream->buffer;
-  stream->buffer.raw_str = nullptr;
-
-  io_clear(stream);
-  return string;
 }
 
-str_t io_buffcopy(io_t *stream) {
-  str_t str = str_new();
+string_t bufio_buffer_copy(bufio_t *stream)
+{
+    string_t str = string_new();
 
-  if (stream == nullptr) {
+    if (stream == nullptr)
+        return str;
+
+    string_reserve(&str, stream->buffer.layout.cap);
+
+    if (str.layout.status == NULL_PTR)
+        return str;
+
+    string_pushstr(&str, stream->buffer.raw_str);
     return str;
-  }
-
-  str_reserve(&str, stream->buffer.layout.cap);
-
-  if (str.layout.status == null_ptr) {
-    return str;
-  }
-
-  memcpy(str.raw_str, stream->buffer.raw_str, stream->buffer.len);
-  return str;
 }
 
-void io_clear(io_t *stream) {
-  if (stream == nullptr)
-    return;
+void bufio_clear(bufio_t *stream)
+{
+    if (stream == nullptr)
+        return;
 
-  str_free(&stream->buffer);
+    string_free(&stream->buffer);
 }
 
-void io_close(io_t *stream) {
-  if (stream == nullptr)
-    return;
+void bufio_close(bufio_t *stream)
+{
+    if (stream == nullptr)
+        return;
 
-  stream->kind = UINT8_MAX;
-  io_clear(stream);
+    bufio_clear(stream);
+    
+    if (stream->kind == STREAM_FILE)
+        fclose(stream->stream);
+
+    *stream = bufio_new(nullptr, STREAM_STDERR);
 }

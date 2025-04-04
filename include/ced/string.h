@@ -2,8 +2,9 @@
 #define CED_STRING_H
 
 #include <ced/memory.h>
-#include <limits.h>
+#include <sys/types.h>
 #include <stddef.h>
+#include <limits.h>
 
 #define CED_STRING_STEP 128ULL
 

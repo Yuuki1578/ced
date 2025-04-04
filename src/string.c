@@ -1,7 +1,9 @@
 #include <ced/memory.h>
 #include <ced/string.h>
-#include <limits.h>
+#include <sys/types.h>
+#include <stddef.h>
 #include <string.h>
+#include <limits.h>
 
 char *string_into(string_t *string)
 {
@@ -53,9 +55,9 @@ ssize_t string_reserve(string_t *string, size_t count)
     return (ssize_t) count;
 }
 
-int string_push(str_t *string, char ch)
+int string_push(string_t *string, char ch)
 {
-    char *tmp;
+    char *tmp = "";
 
     if (string == nullptr)
         return CED_STRING_ERR;
@@ -97,16 +99,12 @@ ssize_t string_pushstr(string_t *string, char *cstr)
     if (string->layout.status == NULL_PTR)
         tmp = layout_alloc(&string->layout);
     else
-        tmp = layout_realloc(&string->layout, string->raw_ptr);
+        tmp = layout_realloc(&string->layout, string->raw_str);
 
     if (string->layout.status != NON_NULL)
         return CED_STRING_ERR;
 
-    if (strlen(tmp) == 0)
-        strncpy(tmp, cstr, len);
-    else
-        strncat(tmp, cstr, len);
-
+    strncat(tmp, cstr, len);
     string->raw_str = tmp;
     return len;
 }
@@ -125,7 +123,7 @@ char *string_at(string_t *string, size_t index)
 void string_crop(string_t *string)
 {
     layout_t    *current;
-    char        *tmp
+    char        *tmp;
 
     if (string == nullptr || string->layout.status == NULL_PTR)
         return;

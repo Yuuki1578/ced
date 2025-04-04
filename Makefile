@@ -22,7 +22,7 @@ CFLAGS = -O3 \
 
 $(BUILD)/$(PROGRAM): $(C_OBJECTS)
 	@echo [INFO] Linking $^ to $@
-	@$(CC) $(CFLAGS) -s $^ -o $@
+	@$(CC) $(CFLAGS) $^ -o $@
 
 $(BUILD)/%.o: $(SOURCE)/%.c
 	@echo [INFO] Compiling $? to $@

@@ -5,7 +5,6 @@
 #include <sys/types.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <wchar.h>
 
 // ssize_t -> <sys/types.h>
 #define BUFIO_OP_SUCCESS        0LL
@@ -63,7 +62,7 @@ ssize_t bufio_read_all(bufio_t *stream);
  * read all bytes until delim occured
  * TODO: check if delim is in ASCII boundary
  * */
-ssize_t bufio_read_until(bufio_t *stream, wchar_t delim);
+ssize_t bufio_read_until(bufio_t *stream, int delim);
 
 /*
  * return a pointer to an inner buffer
@@ -83,9 +82,13 @@ string_t bufio_buffer_copy(bufio_t *stream);
 
 /*
  * close a bound to FILE*, releasing it's buffer
- * note that if the StreamKind is KIND_FILESYS
- * you still need to close the FILE* using fclose()
+ * and closing the stream using fclose() if stream->kind == STREAM_FILE
  * */
 void bufio_close(bufio_t *stream);
+
+/*
+ * truncating the buffer from stream to null
+ * */
+void bufio_clear(bufio_t *stream);
 
 #endif

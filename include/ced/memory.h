@@ -1,9 +1,10 @@
 #ifndef CED_MEMORY_H
 #define CED_MEMORY_H
 
-#include <errno.h>
+#include <sys/types.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <errno.h>
 
 // default limit is set to 3GiB (reasonable)
 #define CED_ALLOC_LIMIT     ((((3ULL * 1024ULL) * 1024ULL) * 1024ULL))
